@@ -24,6 +24,8 @@ SUPER_ADMIN_IDS = [int(x) for x in os.getenv("SUPER_ADMIN_IDS", "").split(",") i
 MANAGER_IDS     = [int(x) for x in os.getenv("MANAGER_IDS", "").split(",") if x.strip()]
 # Все с правами на рассылку/статистику
 ADMIN_IDS       = SUPER_ADMIN_IDS + MANAGER_IDS
+# Группа для уведомлений о новых прохождениях теста
+NOTIFY_GROUP_ID = int(os.getenv("NOTIFY_GROUP_ID", "0")) or None
 SUPABASE_URL    = os.environ["SUPABASE_URL"]
 SUPABASE_KEY    = os.environ["SUPABASE_KEY"]
 TEST_URL        = os.getenv("TEST_URL", "https://tochka-a.vercel.app")
@@ -120,17 +122,18 @@ async def cmd_start(message: types.Message):
             parse_mode="Markdown",
         )
 
-        # Уведомление всем администраторам
-        tg_user_link = f"@{tg_user}" if tg_user else f"tg://user?id={tg_id}"
+        # Уведомление в группу
+        tg_user_link = f"@{tg_user}" if tg_user else f"[{tg_name}](tg://user?id={tg_id})"
         notify_text = (
             "🔔 *Новый человек прошёл тест!*\n\n"
             f"👤 Имя: {tg_name or '—'}\n"
             f"🔗 Контакт: {tg_user_link}\n"
             f"🆔 ID: `{tg_id}`"
         )
-        for admin_id in SUPER_ADMIN_IDS + MANAGER_IDS:
+        targets = ([NOTIFY_GROUP_ID] if NOTIFY_GROUP_ID else []) or SUPER_ADMIN_IDS + MANAGER_IDS
+        for chat_id in targets:
             try:
-                await message.bot.send_message(admin_id, notify_text, parse_mode="Markdown")
+                await message.bot.send_message(chat_id, notify_text, parse_mode="Markdown")
             except Exception:
                 pass
         return
