@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Тест «Точка А»: где ты на пути к деньгам в онлайне</title>
+<meta name="description" content="За 4 минуты узнай, какая одна зона тормозит твой доход, и забери бесплатный разбор." />
+<meta property="og:title" content="Тест «Точка А»" />
+<meta property="og:description" content="Узнай свою точку роста и забери бесплатный разбор." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E0E12;
+    --surface:#17171E;
+    --surface-2:#1E1E28;
+    --border:#2A2A36;
+    --text:#F5F5F7;
+    --muted:#9A9AA8;
+    --accent:#FF3D77;
+    --accent-soft:rgba(255,61,119,.14);
+    --green:#36D399;
+    --red:#FF5C5C;
+    --radius:16px;
+    --maxw:540px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  #bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .wrap{
+    position:relative;
+    z-index:1;
+    min-height:100dvh;
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:24px 18px calc(24px + env(safe-area-inset-bottom));
+    display:flex;
+    flex-direction:column;
+  }
+  h1,h2,.display{font-family:"Unbounded",sans-serif;letter-spacing:-.01em;line-height:1.05}
+  .muted{color:var(--muted)}
+  .accent{color:var(--accent)}
+
+  /* screen transitions */
+  .screen{display:none;flex:1;flex-direction:column}
+  .screen.active{display:flex;animation:rise .35s cubic-bezier(.16,1,.3,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  /* ===== WELCOME ===== */
+  .badge{display:inline-flex;align-items:center;gap:7px;background:var(--accent-soft);color:var(--accent);
+    font-weight:700;font-size:13px;padding:7px 13px;border-radius:999px;width:fit-content}
+  .hero{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;padding:8px 0}
+  .hero h1{font-size:clamp(30px,9vw,42px);font-weight:800}
+  .hero .lead{font-size:16px;color:var(--muted);max-width:34ch}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 10px;text-align:center}
+  .stat b{font-family:"Unbounded";font-size:22px;display:block;line-height:1}
+  .stat span{font-size:12px;color:var(--muted);margin-top:5px;display:block}
+  .spheres-pre{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600}
+
+  /* ===== BUTTONS ===== */
+  .cta{
+    appearance:none;border:none;cursor:pointer;width:100%;
+    background:var(--accent);color:#fff;font-family:"Unbounded";font-weight:700;
+    font-size:16px;padding:17px 20px;border-radius:14px;
+    transition:transform .12s ease, filter .2s ease;
+  }
+  .cta:hover{filter:brightness(1.06)}
+  .cta:active{transform:scale(.98)}
+  .ghost{background:none;border:1px solid var(--border);color:var(--muted);
+    font-family:"Manrope";font-weight:600;font-size:14px;padding:11px;border-radius:12px;cursor:pointer;width:fit-content}
+  .ghost:hover{color:var(--text)}
+
+  /* ===== QUESTION ===== */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
+  .progress{flex:1;height:7px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+  .progress > i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .4s cubic-bezier(.16,1,.3,1)}
+  .counter{font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .q-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .q-emoji{font-size:30px;line-height:1}
+  .q-sphere{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:700}
+  .q-sub{font-size:13px;color:var(--muted)}
+  .q-title{font-family:"Unbounded";font-weight:700;font-size:clamp(20px,5.6vw,25px);margin:6px 0 22px}
+  .opts{display:flex;flex-direction:column;gap:10px}
+  .opt{
+    display:flex;align-items:center;gap:13px;text-align:left;cursor:pointer;
+    background:var(--surface);border:1.5px solid var(--border);border-radius:14px;
+    padding:15px 15px;color:var(--text);font-size:15px;font-weight:500;font-family:"Manrope";
+    transition:border-color .15s,background .15s,transform .1s;
+  }
+  .opt:hover{border-color:#3a3a48}
+  .opt:active{transform:scale(.99)}
+  .opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .opt .num{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--surface-2);color:var(--muted);font-weight:700;font-size:13px}
+  .opt.sel .num{background:var(--accent);color:#fff}
+  .back{margin-top:18px}
+
+  /* ===== RESULT ===== */
+  .res-eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:var(--accent);font-weight:700;text-align:center}
+  .res-title{font-size:clamp(26px,7vw,34px);font-weight:800;text-align:center;margin:6px 0 2px}
+  .res-sub{text-align:center;color:var(--muted);font-size:14px;margin-bottom:18px}
+  .radar-box{display:flex;justify-content:center;margin:4px 0 10px}
+  .avg{text-align:center;margin:6px 0 22px}
+  .avg b{font-family:"Unbounded";color:var(--accent);font-size:46px;line-height:1;display:block}
+  .avg span{color:var(--muted);font-size:13px}
+  .zones{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .zone{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px}
+  .zone h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px;font-family:"Manrope";font-weight:700}
+  .zone.weak h4{color:var(--red)} .zone.strong h4{color:var(--green)}
+  .zone .row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .zone .row b{font-weight:700}
+  .insight{background:linear-gradient(150deg,var(--accent-soft),var(--surface));border:1px solid #3a2230;border-radius:16px;padding:18px;margin-bottom:20px}
+  .insight .lab{color:var(--accent);font-weight:700;font-size:13px;margin-bottom:6px}
+  .insight p{font-size:14px;color:#d9d9e0;margin-bottom:10px}
+  .insight .point{font-weight:700;font-size:15px}
+
+  /* ===== FORM ===== */
+  .form-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px;margin-top:4px}
+  .form-card h3{font-family:"Unbounded";font-size:20px;font-weight:700;margin-bottom:6px}
+  .form-card .gifts{font-size:14px;color:var(--muted);margin-bottom:16px}
+  .form-card .gifts li{margin:4px 0 4px 18px}
+  .field{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}
+  .field label{font-size:13px;font-weight:600;color:#cfcfd8}
+  .field input{
+    background:var(--bg);border:1.5px solid var(--border);border-radius:12px;
+    padding:14px;color:var(--text);font-size:15px;font-family:"Manrope";
+  }
+  .field input::placeholder{color:#6a6a78}
+  .field input:focus{outline:none;border-color:var(--accent)}
+  .err{color:var(--red);font-size:12px;display:none}
+  .field.invalid .err{display:block}
+  .field.invalid input{border-color:var(--red)}
+  .fineprint{font-size:11px;color:#6a6a78;text-align:center;margin-top:11px}
+
+  /* success */
+  .done{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px}
+  .done .check{width:74px;height:74px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:38px}
+  .done h2{font-size:28px;font-weight:800}
+  .done p{color:var(--muted);font-size:15px;max-width:32ch}
+
+  @media (prefers-reduced-motion: reduce){
+    .screen.active{animation:none}
+    .progress > i{transition:none}
+    .cta,.opt{transition:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div class="wrap">
+
+  <!-- ============ WELCOME ============ -->
+  <section class="screen active" id="s-welcome">
+    <span class="badge">📊 Бесплатный тест · 4 минуты</span>
+    <div class="hero">
+      <h1>Твоя <span class="accent">точка А</span> на пути к деньгам в онлайне</h1>
+      <p class="lead">За 4 минуты узнаешь, какая одна зона прямо сейчас тормозит твой доход. И заберёшь персональный разбор в подарок.</p>
+      <div class="stats">
+        <div class="stat"><b>7</b><span>сфер</span></div>
+        <div class="stat"><b>37</b><span>вопросов</span></div>
+        <div class="stat"><b>~6</b><span>минут</span></div>
+      </div>
+      <div class="spheres-pre">
+        <span class="chip">💰 Деньги</span><span class="chip">🎯 Навык</span><span class="chip">🧲 Клиенты</span>
+        <span class="chip">🪞 Я</span><span class="chip">👥 Окружение</span><span class="chip">🔄 Привычки</span><span class="chip">🌴 Кайф</span>
+      </div>
+    </div>
+    <button class="cta" onclick="start()">Пройти тест →</button>
+  </section>
+
+  <!-- ============ QUESTION ============ -->
+  <section class="screen" id="s-quiz">
+    <div class="topbar">
+      <button class="ghost" id="backBtn" onclick="back()" style="padding:8px 10px;display:none">←</button>
+      <div class="progress"><i id="bar"></i></div>
+      <div class="counter" id="counter">1 / 9</div>
+    </div>
+    <div class="q-head">
+      <div class="q-emoji" id="qEmoji">💰</div>
+      <div>
+        <div class="q-sphere" id="qSphere">Деньги</div>
+        <div class="q-sub" id="qSub">Сфера 1 из 7</div>
+      </div>
+    </div>
+    <h2 class="q-title" id="qTitle">Вопрос</h2>
+    <div class="opts" id="opts"></div>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section class="screen" id="s-result">
+    <div class="res-eyebrow">Результаты теста</div>
+    <h2 class="res-title">Твоя точка А</h2>
+    <p class="res-sub">Колесо баланса · 7 сфер</p>
+    <div class="radar-box" id="radarBox"></div>
+    <div class="avg"><b id="avgVal">0</b><span>средний балл из 10</span></div>
+
+    <div class="zones">
+      <div class="zone weak"><h4>⚠️ Слабые зоны</h4><div id="weakList"></div></div>
+      <div class="zone strong"><h4>💪 Сильные зоны</h4><div id="strongList"></div></div>
+    </div>
+
+    <div class="insight">
+      <div class="lab">💡 Правило бочки</div>
+      <p>Твой доход стоит не из-за среднего балла, а из-за самой слабой зоны. Как вода в бочке держится на уровне самой короткой доски.</p>
+      <div class="point">🔴 Твоя точка роста: <span id="weakName" class="accent"></span></div>
+      <p id="weakText" style="margin-top:10px;margin-bottom:0"></p>
+    </div>
+
+    <div class="form-card" id="formCard">
+      <h3>Забери свой разбор 🎁</h3>
+      <ul class="gifts">
+        Бесплатно за прохождение теста:
+        <li>персональный разбор твоей точки А (15 минут): как дойти до 10/10 во всех сферах</li>
+        <li>пошаговый план под твою самую слабую зону</li>
+      </ul>
+      <div class="field" id="f-name">
+        <label for="name">Как тебя зовут?</label>
+        <input id="name" type="text" placeholder="Имя" autocomplete="given-name" />
+        <span class="err">Напиши имя</span>
+      </div>
+      <div class="field" id="f-contact">
+        <label for="contact">Telegram для связи</label>
+        <input id="contact" type="text" placeholder="@username или телефон" autocomplete="off" />
+        <span class="err">Оставь @username или телефон</span>
+      </div>
+      <button class="cta" onclick="submitLead()" id="submitBtn">Получить разбор →</button>
+      <p class="fineprint">Нажимая кнопку, ты соглашаешься на обработку данных. Спама не будет.</p>
+    </div>
+  </section>
+
+  <!-- ============ SUCCESS ============ -->
+  <section class="screen" id="s-done">
+    <div class="done">
+      <div class="check">✓</div>
+      <h2>Готово!</h2>
+      <p id="doneText">Заявка принята. В ближайшее время напишу тебе в Telegram, разберём твою точку А и как дойти до 10/10 во всех сферах.</p>
+      <a class="cta" id="doneBtn" href="#" style="text-decoration:none;display:block;max-width:320px">Перейти в канал →</a>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ====================== CONFIG (заполнить при подключении базы / ссылок) ====================== */
+const CONFIG = {
+  // Supabase (стек Максима). Публичный insert-ключ безопасен для браузера (RLS insert-only).
+  SUPABASE_URL: "https://ksfcerxydsfmtormnptw.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_3sFi6jPI6QIt6PX8UNpBGw_lSTT8QLM",
+  LEADS_TABLE: "leads_tochka_a",
+  CHANNEL_URL: "https://t.me/GoteX5",   // куда вести после теста
+  CHANNEL_LABEL: "Перейти дальше →",
+  // Для возврата в бота с пометкой «тест пройден». Вписать username бота: https://t.me/ИМЯ_БОТА
+  BOT_DEEPLINK: "https://t.me/TyomaVtemu_bot",
+};
+
+/* TG-идентификация из трекинг-ссылки бота (?tg_id=..&tg_user=..&tg_name=..&ref=..) */
+const TG = (function(){
+  const p = new URLSearchParams(location.search);
+  const id = p.get("tg_id") || p.get("uid") || p.get("user_id");
+  if(!id) return null;
+  return {
+    id,
+    user: (p.get("tg_user") || p.get("username") || "").replace(/^@/,""),
+    name: p.get("tg_name") || p.get("name") || "",
+    ref:  p.get("ref") || p.get("utm_source") || ""
+  };
+})();
+
+/* ====================== ДАННЫЕ ТЕСТА ====================== */
+const SPHERES = [
+  { key:"money", icon:"💰", name:"Деньги", qq:[
+    ["Сколько ты сейчас стабильно зарабатываешь в месяц?",["Ноль или почти ноль","До 30 000 ₽","30-80 000 ₽","80-200 000 ₽","200 000 ₽+"]],
+    ["Как менялся твой доход за последний год?",["Падал или нестабилен","Стоял на месте","Немного вырос","Заметно вырос","Вырос сильно"]],
+    ["Что ты чувствуешь, когда думаешь о деньгах?",["Тревогу или стыд","Недовольство","Нормально, но хочу больше","В целом доволен","Уверенность"]],
+    ["Есть ли у тебя финансовая подушка?",["Нет, живу от нуля до нуля","Меньше чем на месяц","На 1-3 месяца","На 3-6 месяцев","На полгода и больше"]],
+    ["Твой доход зависит от тебя или от кого-то?",["Полностью от других","В основном от других","Примерно 50 на 50","В основном от меня","Полностью управляю сам"]],
+  ]},
+  { key:"skill", icon:"🎯", name:"Навык", qq:[
+    ["Есть ли у тебя навык, за который платят или готовы платить?",["Нет, не понимаю на чём зарабатывать","Есть идеи, но ничего конкретного","Есть, но денег почти не приносит","Да, приносит, но нестабильно","Да, чёткий востребованный навык"]],
+    ["Как быстро ты осваиваешь новое дело?",["Очень тяжело и долго","Медленно","Средне","Довольно быстро","Схватываю на лету"]],
+    ["Пользуешься современными инструментами (ИИ и т.п.), чтобы делать больше за меньше?",["Нет, вообще","Слышал, но не пользуюсь","Пробовал пару раз","Регулярно использую","Выжимаю по максимуму"]],
+    ["Насколько твой навык востребован на рынке?",["Почти никому не нужен","Спрос слабый","Средний спрос","Хороший спрос","Высокий, за мной очередь"]],
+    ["Если нужно срочно заработать, ты знаешь как?",["Совсем нет","Очень смутно","Есть пара идей","Да, есть способ","Да, несколько проверенных"]],
+  ]},
+  { key:"clients", icon:"🧲", name:"Клиенты", qq:[
+    ["Насколько стабильно к тебе приходят клиенты, заказы или предложения?",["Совсем не приходят","Редко, случайно","Бывают, но не управляю","Стабильно, хочу больше","Поток, выбираю с кем"]],
+    ["Умеешь находить тех, кто готов платить?",["Нет, не знаю где брать","Пробую, не выходит","Иногда получается","Да, но непостоянно","Да, уверенно"]],
+    ["Как у тебя с тем, чтобы назвать цену и не сливать?",["Боюсь называть, занижаю","Называю через силу","Средне","Уверенно","Называю дорого и легко"]],
+    ["Когда предлагаешь, тебе отвечают и покупают?",["Почти никогда","Редко","Иногда","Часто","Стабильно"]],
+    ["Есть система привлечения, а не «как повезёт»?",["Никакой системы","Только сарафан","Что-то пробую","Есть рабочая схема","Отлаженная система"]],
+  ]},
+  { key:"self", icon:"🪞", name:"Я", qq:[
+    ["Считаешь ли ты себя уверенным человеком?",["Нет, часто сомневаюсь","Скорее нет","Зависит от ситуации","Да, в большинстве случаев","Да, это моё базовое состояние"]],
+    ["Веришь, что способен зарабатывать в разы больше?",["Нет, это мой максимум","Теоретически да, но не знаю как","Верю, но чего-то не хватает","Да, вопрос времени","Абсолютно, уже на пути"]],
+    ["Считаешь, что заслуживаешь высокий доход?",["Нет, ощущение «не для меня»","Сомневаюсь","Умом да, внутри иначе","Да, считаю справедливым","Безусловно"]],
+    ["Как реагируешь на критику и неудачи?",["Выпадаю надолго","Долго прокручиваю","Восстанавливаюсь за пару дней","Быстро делаю выводы","Воспринимаю как точку роста"]],
+    ["Останавливает ли тебя мысль «кто я такой, чтобы…»?",["Постоянно","Часто","Иногда","Редко","Почти никогда"]],
+  ]},
+  { key:"circle", icon:"👥", name:"Окружение", qq:[
+    ["Кто тебя окружает по уровню дохода и амбиций?",["Тянут вниз","Никто не растёт","Пара мотивирующих","В основном растущие","Те, кто выше меня"]],
+    ["Поддерживают ли близкие твоё желание больше зарабатывать?",["Высмеивают, «несерьёзно»","Равнодушны","Нейтрально","Поддерживают","Вдохновляют и помогают"]],
+    ["Есть рядом тот, у кого можно спросить совет по делу и деньгам?",["Нет совсем","Почти нет","Один человек","Несколько","Сильное окружение"]],
+    ["Как часто ты в среде, где люди создают и зарабатывают?",["Никогда","Редко","Иногда","Часто","Постоянно"]],
+    ["Окружение тебя двигает вперёд или тормозит?",["Сильно тормозит","Скорее тормозит","Нейтрально","Скорее двигает","Сильно двигает"]],
+  ]},
+  { key:"habits", icon:"🔄", name:"Привычки", qq:[
+    ["Доводишь ли важные дела до конца?",["Почти никогда","Редко","Примерно 50 на 50","Чаще да","Да, это сильная сторона"]],
+    ["Сколько у тебя брошенных начинаний за последний год?",["Очень много","Много","Несколько","Мало","Почти нет"]],
+    ["Как у тебя с залипанием в ленте и сериалах вместо дел?",["Съедает всё время","Часто залипаю","Иногда бывает","Редко","Держу под контролем"]],
+    ["Есть ли у тебя режим и план дня?",["Полный хаос","Скорее хаос","Что-то есть","В основном да","Чёткая система"]],
+    ["Когда становится трудно, ты продолжаешь или бросаешь?",["Сразу бросаю","Обычно бросаю","По-разному","Обычно продолжаю","Всегда дожимаю"]],
+  ]},
+  { key:"vibe", icon:"🌴", name:"Кайф от жизни", qq:[
+    ["Как тебе твоё состояние и жизнь сейчас?",["Выгорание, «день сурка»","Мало радости, не вывожу","Нормально, но хочется свободы","В целом по кайфу","Живу как хочу"]],
+    ["Сколько у тебя энергии на рост?",["Её нет","Часто без сил","На текучку хватает","Достаточно","Много, готов пахать"]],
+    ["Чувствуешь ли свободу распоряжаться своим временем?",["Совсем нет","Почти нет","Частично","В основном да","Полная свобода"]],
+    ["Занимаешься тем, что нравится?",["Совсем нет","Редко","Иногда","В основном да","Да, кайфую"]],
+    ["Насколько ты доволен балансом жизни и дел?",["Всё плохо","Скорее нет","Средне","Скорее доволен","Полный баланс"]],
+  ]},
+];
+
+const QUALIFIERS = [
+  { key:"intent", icon:"🔥", name:"Намерение", q:"Если на бесплатном разборе покажу твой путь к первым или бОльшим деньгам, когда готова начать?",
+    opts:[ {t:"Хоть сейчас, ищу решение", tag:"hot"}, {t:"Скоро, если увижу что это реально", tag:"warm"},
+           {t:"Присматриваюсь", tag:"cool"}, {t:"Пока просто интересно", tag:"cold"} ] },
+  { key:"route", icon:"🧭", name:"Направление", q:"Что тебе ближе?",
+    opts:[ {t:"Хочу с нуля научиться зарабатывать в онлайне", tag:"newbie"},
+           {t:"Уже что-то делаю, хочу клиентов и чек выше", tag:"freelancer"},
+           {t:"Хочу строить своё: запускать, продюсировать", tag:"producer"} ] },
+];
+
+const WEAK_TEXT = {
+  money:"Денег пока мало, и это не приговор, а следствие. Доход рождается из системы: навык, тот кто платит, цена. Разберём, какое звено у тебя выпало.",
+  skill:"Дело не в том, что ты «недоучился», а в том, что навык не упакован в то, за что платят. С современными инструментами это собирается за недели. Покажу как.",
+  clients:"Это зона, которая держит почти всех. Дело не в том, что ты «мало стараешься», а в том, что нет системы: где брать тех, кто платит, и как доводить до сделки.",
+  self:"Сомнения и «нет опыта» это не стоп, а привычка. Те, кто берёт деньги, не «увереннее»: у них просто есть упаковка и первый результат, после которого страх уходит.",
+  circle:"Когда вокруг «это несерьёзно», расти почти невозможно. Половина результата это среда, где доход и рост норма. Покажу, как её себе собрать.",
+  habits:"Много стартов и брошенных дел это не лень, а отсутствие короткой системы с результатом за недели. Когда результат близко, бросать перестаёшь.",
+  vibe:"Выгорание и «день сурка» уходят не от отдыха, а когда появляется дело, которое даёт и деньги, и свободу. За этим люди и идут в своё дело: за состоянием.",
+};
+const TIE_ORDER = ["clients","skill","money","self","habits","circle","vibe"];
+
+/* ====================== СОСТОЯНИЕ ====================== */
+const STEPS = [];
+SPHERES.forEach((s,si)=>{
+  s.qq.forEach((qq,qi)=>{
+    STEPS.push({type:"sphere", key:s.key, icon:s.icon, name:s.name, si, qi, qn:s.qq.length, q:qq[0], opts:qq[1]});
+  });
+});
+QUALIFIERS.forEach(q=>{
+  STEPS.push({type:"qual", key:q.key, icon:q.icon, name:q.name, q:q.q, opts:q.opts.map(o=>o.t), raw:q});
+});
+const TOTAL = STEPS.length;
+let step = 0;
+const answers = {}; // sphereKey -> [v1..v5] ; qualKey -> {value,tag}
+
+/* ====================== НАВИГАЦИЯ ====================== */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0,0);
+}
+function start(){ step=0; renderStep(); show("s-quiz"); }
+
+function renderStep(){
+  const st = STEPS[step];
+  document.getElementById("counter").textContent = (step+1)+" / "+TOTAL;
+  document.getElementById("bar").style.width = (step/TOTAL)*100 + "%";
+  document.getElementById("qEmoji").textContent = st.icon;
+  document.getElementById("qSphere").textContent = st.name;
+  document.getElementById("qSub").textContent = st.type==="sphere"
+    ? ("Сфера "+(st.si+1)+" из 7 · вопрос "+(st.qi+1)+" из "+st.qn)
+    : "Последние штрихи";
+  document.getElementById("qTitle").textContent = st.q;
+  document.getElementById("backBtn").style.display = step>0 ? "block" : "none";
+
+  const wrap = document.getElementById("opts");
+  wrap.innerHTML = "";
+  const selVal = st.type==="sphere" ? (answers[st.key]||[])[st.qi] : (answers[st.key]||{}).value;
+  st.opts.forEach((label,i)=>{
+    const btn = document.createElement("button");
+    btn.className = "opt";
+    if(selVal === i+1) btn.classList.add("sel");
+    btn.innerHTML = '<span class="num">'+(i+1)+'</span><span>'+label+'</span>';
+    btn.onclick = ()=>choose(st, i);
+    wrap.appendChild(btn);
+  });
+}
+
+function choose(st, i){
+  if(st.type==="sphere"){
+    if(!answers[st.key]) answers[st.key] = [];
+    answers[st.key][st.qi] = i+1;
+  } else {
+    answers[st.key] = { value:i+1, tag:st.raw.opts[i].tag };
+  }
+  const kids = document.querySelectorAll("#opts .opt");
+  kids.forEach(k=>k.classList.remove("sel"));
+  kids[i].classList.add("sel");
+  setTimeout(()=>{
+    if(step < TOTAL-1){ step++; renderStep(); }
+    else { document.getElementById("bar").style.width="100%"; renderResult(); show("s-result"); }
+  }, 140);
+}
+function back(){ if(step>0){ step--; renderStep(); } }
+
+/* ====================== РЕЗУЛЬТАТ ====================== */
+function calcScores(){
+  return SPHERES.map(s=>{
+    const vals = answers[s.key] || [];
+    const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 1;
+    return { key:s.key, icon:s.icon, name:s.name, score: Math.round(avg*2) }; // 2..10
+  });
+}
+function pickWeakest(scores){
+  const min = Math.min(...scores.map(s=>s.score));
+  for(const key of TIE_ORDER){ const f=scores.find(s=>s.key===key); if(f && f.score===min) return f; }
+  return scores[0];
+}
+function renderResult(){
+  const scores = calcScores();
+  const avg = (scores.reduce((a,b)=>a+b.score,0)/scores.length);
+  document.getElementById("avgVal").textContent = avg.toFixed(1);
+
+  const sorted=[...scores].sort((a,b)=>a.score-b.score);
+  const weakest=pickWeakest(scores);
+  const weak=sorted.slice(0,2), strong=[...scores].sort((a,b)=>b.score-a.score).slice(0,2);
+  const rowHtml=(s,color)=>'<div class="row"><span>'+s.icon+' '+s.name+'</span><b style="color:'+color+'">'+s.score+'</b></div>';
+  document.getElementById("weakList").innerHTML  = weak.map(s=>rowHtml(s,"var(--red)")).join("");
+  document.getElementById("strongList").innerHTML= strong.map(s=>rowHtml(s,"var(--green)")).join("");
+  document.getElementById("weakName").textContent = weakest.icon+" "+weakest.name+" ("+weakest.score+"/10)";
+  document.getElementById("weakText").textContent = WEAK_TEXT[weakest.key];
+
+  drawRadar(scores);
+}
+
+function drawRadar(scores){
+  const size=260, cx=size/2, cy=size/2, R=98, n=scores.length;
+  const ang=i=>(-Math.PI/2)+(i*2*Math.PI/n);
+  const pt=(i,r)=>[cx+Math.cos(ang(i))*r, cy+Math.sin(ang(i))*r];
+  let svg='<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" role="img" aria-label="Колесо баланса">';
+  // сетка
+  for(let g=1;g<=4;g++){
+    const r=R*g/4, pts=[];
+    for(let i=0;i<n;i++){const[x,y]=pt(i,r);pts.push(x.toFixed(1)+","+y.toFixed(1));}
+    svg+='<polygon points="'+pts.join(" ")+'" fill="none" stroke="#2A2A36" stroke-width="1"/>';
+  }
+  // оси + подписи
+  for(let i=0;i<n;i++){
+    const[x,y]=pt(i,R); svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="#2A2A36" stroke-width="1"/>';
+    const[lx,ly]=pt(i,R+16);
+    svg+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" font-size="15" text-anchor="middle" dominant-baseline="middle">'+scores[i].icon+'</text>';
+  }
+  // данные
+  const dpts=[];
+  for(let i=0;i<n;i++){const[x,y]=pt(i,R*scores[i].score/10);dpts.push(x.toFixed(1)+","+y.toFixed(1));}
+  svg+='<polygon points="'+dpts.join(" ")+'" fill="rgba(255,61,119,.28)" stroke="#FF3D77" stroke-width="2"/>';
+  for(let i=0;i<n;i++){const[x,y]=pt(i,R*scores[i].score/10);svg+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.5" fill="#FF3D77"/>';}
+  svg+='</svg>';
+  document.getElementById("radarBox").innerHTML=svg;
+}
+
+/* ====================== ЗАХВАТ ЛИДА ====================== */
+function buildLead(){
+  const scores=calcScores();
+  const weakest=pickWeakest(scores);
+  const segByRoute = answers.route?.tag;          // newbie | freelancer | producer
+  const income = (answers.money || [])[0] || 1;   // первый вопрос сферы Деньги = уровень дохода
+  // правило сегмента: producer/доход высокий -> наставничество Максима; иначе по маршруту
+  let segment = segByRoute || "newbie";
+  if(income>=4) segment="producer_or_scale";
+  const tags=[];
+  if(answers.intent?.tag) tags.push("intent_"+answers.intent.tag);
+  if(segByRoute) tags.push("route_"+segByRoute);
+  tags.push("income_lvl_"+income);
+  tags.push("weak_"+weakest.key);
+  if(answers.intent?.tag==="hot") tags.push("priority_hot");
+
+  return {
+    name: document.getElementById("name").value.trim(),
+    contact: document.getElementById("contact").value.trim(),
+    tg_id: TG ? TG.id : null,
+    tg_user: TG ? TG.user : null,
+    ref: TG ? TG.ref : null,
+    avg: +(scores.reduce((a,b)=>a+b.score,0)/scores.length).toFixed(1),
+    weakest: weakest.key,
+    segment,
+    intent: answers.intent?.tag || null,
+    route: segByRoute || null,
+    income_level: income,
+    scores: Object.fromEntries(scores.map(s=>[s.key,s.score])),
+    tags,
+    created_at: new Date().toISOString(),
+    source: "test_tochka_a",
+  };
+}
+
+async function submitLead(){
+  const nameF=document.getElementById("f-name"), contactF=document.getElementById("f-contact");
+  const name=document.getElementById("name").value.trim();
+  const contact=document.getElementById("contact").value.trim();
+  let ok=true;
+  if(name.length<2){nameF.classList.add("invalid");ok=false} else nameF.classList.remove("invalid");
+  if(contact.length<3){contactF.classList.add("invalid");ok=false} else contactF.classList.remove("invalid");
+  if(!ok) return;
+
+  const btn=document.getElementById("submitBtn");
+  btn.disabled=true; btn.textContent="Отправляю...";
+  const lead=buildLead();
+
+  try{
+    if(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY){
+      const r=await fetch(CONFIG.SUPABASE_URL+"/rest/v1/"+CONFIG.LEADS_TABLE,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "apikey":CONFIG.SUPABASE_ANON_KEY,
+          "Authorization":"Bearer "+CONFIG.SUPABASE_ANON_KEY,
+          "Prefer":"return-minimal",
+        },
+        body:JSON.stringify(lead),
+      });
+      if(!r.ok) throw new Error("supabase "+r.status);
+    } else {
+      // База ещё не подключена: копим локально, чтобы ничего не потерять
+      const arr=JSON.parse(localStorage.getItem("tochka_a_leads")||"[]");
+      arr.push(lead); localStorage.setItem("tochka_a_leads",JSON.stringify(arr));
+      console.log("LEAD (локально, база не подключена):",lead);
+    }
+  }catch(e){
+    console.error(e);
+    const arr=JSON.parse(localStorage.getItem("tochka_a_leads")||"[]");
+    arr.push(lead); localStorage.setItem("tochka_a_leads",JSON.stringify(arr));
+  }
+
+  // success
+  const dest = (TG && CONFIG.BOT_DEEPLINK)
+    ? (CONFIG.BOT_DEEPLINK + (CONFIG.BOT_DEEPLINK.includes("?")?"&":"?") + "start=passed_" + TG.id)
+    : CONFIG.CHANNEL_URL;
+  const link=document.getElementById("doneBtn");
+  link.href=dest; link.textContent=CONFIG.CHANNEL_LABEL;
+  show("s-done");
+  // если пришёл из бота — авто-возврат в бота, чтобы он пометил «тест пройден» и запустил разбор
+  if(TG && CONFIG.BOT_DEEPLINK){ setTimeout(()=>{ location.href=dest; }, 1400); }
+}
+
+/* Подставляем контакт из трекинг-ссылки бота: контакт уже знаем, поле не спрашиваем */
+function initTG(){
+  if(!TG) return;
+  const nm=document.getElementById("name"), ct=document.getElementById("contact");
+  if(TG.name) nm.value=TG.name;
+  ct.value = TG.user ? ("@"+TG.user) : ("id"+TG.id);
+  const cf=document.getElementById("f-contact"); if(cf) cf.style.display="none";
+}
+initTG();
+
+/* ====================== ИНТЕРАКТИВНЫЙ ФОН: треугольная сетка ====================== */
+(function(){
+  const canvas=document.getElementById("bgCanvas");
+  if(!canvas) return;
+  const ctx=canvas.getContext("2d");
+  const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W,H,dpr,cols,rows,pts,tris,raf;
+  const mouse={x:-9999,y:-9999};
+  const GAP=94;
+
+  function build(){
+    dpr=Math.min(window.devicePixelRatio||1,2);
+    W=canvas.width=Math.floor(innerWidth*dpr);
+    H=canvas.height=Math.floor(innerHeight*dpr);
+    canvas.style.width=innerWidth+"px"; canvas.style.height=innerHeight+"px";
+    const gap=GAP*dpr;
+    cols=Math.ceil(W/gap)+2; rows=Math.ceil(H/gap)+2;
+    pts=[];
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const bx=(c-1)*gap, by=(r-1)*gap;
+      const jx=Math.sin(r*12.9+c*4.7)*gap*0.42;
+      const jy=Math.cos(r*7.7+c*9.1)*gap*0.42;
+      pts.push({bx:bx+jx, by:by+jy, x:bx+jx, y:by+jy, ph:(r*1.3+c*0.7)%6.283, sp:0.6+((r+c)%5)*0.13});
+    }
+    tris=[];
+    const idx=(r,c)=>r*cols+c;
+    for(let r=0;r<rows-1;r++)for(let c=0;c<cols-1;c++){
+      tris.push([idx(r,c),idx(r,c+1),idx(r+1,c)]);
+      tris.push([idx(r,c+1),idx(r+1,c+1),idx(r+1,c)]);
+    }
+  }
+
+  function draw(t){
+    ctx.clearRect(0,0,W,H);
+    if(!reduce){
+      const k=6*dpr;
+      for(const p of pts){
+        p.x=p.bx+Math.sin(t*0.0005*p.sp+p.ph)*k;
+        p.y=p.by+Math.cos(t*0.0004*p.sp+p.ph)*k;
+      }
+    }
+    const R=300*dpr;
+    for(const tr of tris){
+      const a=pts[tr[0]], b=pts[tr[1]], c=pts[tr[2]];
+      const cx=(a.x+b.x+c.x)/3, cy=(a.y+b.y+c.y)/3;
+      const d=Math.hypot(cx-mouse.x, cy-mouse.y);
+      const inf=Math.max(0, 1-d/R); // 0..1 близость к курсору
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.lineTo(c.x,c.y); ctx.closePath();
+      if(inf>0.02){ ctx.fillStyle="rgba(255,61,119,"+(inf*inf*0.11)+")"; ctx.fill(); }
+      ctx.lineWidth=1*dpr;
+      ctx.strokeStyle = inf>0.02 ? "rgba(255,90,140,"+(0.09+inf*0.5)+")" : "rgba(130,130,150,0.05)";
+      ctx.stroke();
+    }
+    if(!reduce) raf=requestAnimationFrame(draw);
+  }
+  function once(){ cancelAnimationFrame(raf); draw(0); }
+
+  build();
+  if(reduce){ once(); } else { raf=requestAnimationFrame(draw); }
+
+  window.addEventListener("mousemove", e=>{ mouse.x=e.clientX*dpr; mouse.y=e.clientY*dpr; if(reduce) once(); }, {passive:true});
+  window.addEventListener("mouseleave", ()=>{ mouse.x=mouse.y=-9999; if(reduce) once(); });
+  let rz; window.addEventListener("resize", ()=>{ clearTimeout(rz); rz=setTimeout(()=>{ build(); if(reduce) once(); }, 150); });
+})();
+</script>
+</body>
+</html>
