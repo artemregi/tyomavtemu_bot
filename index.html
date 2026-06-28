@@ -521,24 +521,12 @@ async function submitLead(){
   const lead=buildLead();
 
   try{
-    if(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY){
-      const r=await fetch(CONFIG.SUPABASE_URL+"/rest/v1/"+CONFIG.LEADS_TABLE,{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "apikey":CONFIG.SUPABASE_ANON_KEY,
-          "Authorization":"Bearer "+CONFIG.SUPABASE_ANON_KEY,
-          "Prefer":"return-minimal",
-        },
-        body:JSON.stringify(lead),
-      });
-      if(!r.ok) throw new Error("supabase "+r.status);
-    } else {
-      // База ещё не подключена: копим локально, чтобы ничего не потерять
-      const arr=JSON.parse(localStorage.getItem("tochka_a_leads")||"[]");
-      arr.push(lead); localStorage.setItem("tochka_a_leads",JSON.stringify(arr));
-      console.log("LEAD (локально, база не подключена):",lead);
-    }
+    const r=await fetch("/api/lead",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(lead),
+    });
+    if(!r.ok) throw new Error("api "+r.status);
   }catch(e){
     console.error(e);
     const arr=JSON.parse(localStorage.getItem("tochka_a_leads")||"[]");
