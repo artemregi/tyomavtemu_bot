@@ -111,12 +111,28 @@ async def cmd_start(message: types.Message):
 
     if args.startswith("passed_") and args.replace("passed_", "", 1) == str(tg_id):
         await db.update(USERS_TABLE, {"tg_id": str(tg_id)}, {"test_passed_at": now_iso()})
+
+        # Уведомление пользователю
         await message.answer(
             "🎉 *Тест пройден!*\n\n"
             "Я получил твои результаты. Скоро напишу тебе — разберём твою точку А "
             "и какая одна зона прямо сейчас тормозит твой доход.",
             parse_mode="Markdown",
         )
+
+        # Уведомление всем администраторам
+        tg_user_link = f"@{tg_user}" if tg_user else f"tg://user?id={tg_id}"
+        notify_text = (
+            "🔔 *Новый человек прошёл тест!*\n\n"
+            f"👤 Имя: {tg_name or '—'}\n"
+            f"🔗 Контакт: {tg_user_link}\n"
+            f"🆔 ID: `{tg_id}`"
+        )
+        for admin_id in SUPER_ADMIN_IDS + MANAGER_IDS:
+            try:
+                await message.bot.send_message(admin_id, notify_text, parse_mode="Markdown")
+            except Exception:
+                pass
         return
 
     url = make_test_url(tg_id, tg_user, tg_name)
