@@ -17,12 +17,17 @@ from aiogram.filters import Command, CommandStart
 log = logging.getLogger(__name__)
 
 # ─────────────── конфиг ───────────────
-BOT_TOKEN    = os.environ["BOT_TOKEN"]
-ADMIN_IDS    = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()]
-SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_KEY = os.environ["SUPABASE_KEY"]
-TEST_URL     = os.getenv("TEST_URL", "https://tochka-a.vercel.app")
-USERS_TABLE  = os.getenv("USERS_TABLE", "bot_users")
+BOT_TOKEN       = os.environ["BOT_TOKEN"]
+# Супер-админ: полный доступ (удаление, управление менеджерами и т.д.)
+SUPER_ADMIN_IDS = [int(x) for x in os.getenv("SUPER_ADMIN_IDS", "").split(",") if x.strip()]
+# Менеджер: рассылки + статистика, без управления пользователями
+MANAGER_IDS     = [int(x) for x in os.getenv("MANAGER_IDS", "").split(",") if x.strip()]
+# Все с правами на рассылку/статистику
+ADMIN_IDS       = SUPER_ADMIN_IDS + MANAGER_IDS
+SUPABASE_URL    = os.environ["SUPABASE_URL"]
+SUPABASE_KEY    = os.environ["SUPABASE_KEY"]
+TEST_URL        = os.getenv("TEST_URL", "https://tochka-a.vercel.app")
+USERS_TABLE     = os.getenv("USERS_TABLE", "bot_users")
 
 
 # ─────────────── Supabase ───────────────

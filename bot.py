@@ -28,8 +28,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger(__name__)
 
 # ─────────────── конфиг ───────────────
-BOT_TOKEN      = os.environ["BOT_TOKEN"]
-ADMIN_IDS      = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()]
+BOT_TOKEN       = os.environ["BOT_TOKEN"]
+SUPER_ADMIN_IDS = [int(x) for x in os.getenv("SUPER_ADMIN_IDS", "").split(",") if x.strip()]
+MANAGER_IDS     = [int(x) for x in os.getenv("MANAGER_IDS", "").split(",") if x.strip()]
+ADMIN_IDS       = SUPER_ADMIN_IDS + MANAGER_IDS
 SUPABASE_URL   = os.environ["SUPABASE_URL"]      # https://xxx.supabase.co
 SUPABASE_KEY   = os.environ["SUPABASE_KEY"]      # service_role ключ (не anon!)
 TEST_URL       = os.getenv("TEST_URL", "https://tochka-a.vercel.app")
